@@ -1,0 +1,29 @@
+{
+  "name": "@moveindustries/confidential-asset-wasm-bindings",
+  "version": "0.0.4",
+  "description": "Unified bindings for confidential asset WASM packages",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/movementlabsxyz/confidential-asset-wasm-bindings.git"
+  },
+  "exports": {
+    "./pollard-kangaroo": {
+      "import": "./pollard-kangaroo/movement_pollard_kangaroo_wasm-esm.js",
+      "require": "./pollard-kangaroo/movement_pollard_kangaroo_wasm-cjs.js",
+      "types": "./pollard-kangaroo/movement_pollard_kangaroo_wasm.d.ts"
+    },
+    "./range-proofs": {
+      "import": "./range-proofs/movement_rp_wasm-esm.js",
+      "require": "./range-proofs/movement_rp_wasm-cjs.js",
+      "types": "./range-proofs/movement_rp_wasm.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": ["./index.d.ts"],
+      "pollard-kangaroo": ["./pollard-kangaroo/movement_pollard_kangaroo_wasm.d.ts"],
+      "range-proofs": ["./range-proofs/movement_rp_wasm.d.ts"]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// Copyright © Aptos Foundation
+// Copyright © Move Industries
 // SPDX-License-Identifier: Apache-2.0
 
 import initWasm, {
@@ -6,7 +6,7 @@ import initWasm, {
     verify_proof as verifyProof,
     batch_range_proof as batchRangeProof,
     batch_verify_proof as batchVerifyProof,
-} from "./pkg/aptos_rp_wasm";
+} from "./pkg/movement_rp_wasm";
 
 export interface RangeProofInputs {
     v: bigint;
@@ -41,7 +41,7 @@ export interface BatchVerifyRangeProofInputs {
 }
 
 const RANGE_PROOF_WASM_URL =
-    "./pkg/aptos_rp_wasm_bg.wasm";
+    "./pkg/movement_rp_wasm_bg.wasm";
 
 async function init() {
     const wasmBytes = await Deno.readFile(RANGE_PROOF_WASM_URL)

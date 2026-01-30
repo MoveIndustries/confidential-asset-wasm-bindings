@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-IMAGE_NAME="range-proofs-aptos-wasm-builder"
+IMAGE_NAME="range-proofs-movement-wasm-builder"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTAINER_WORKDIR="/usr/src/app"
 LOCAL_PKG_DIR="$SCRIPT_DIR/pkg"

@@ -1,5 +1,5 @@
 [package]
-name = "aptos_rp_wasm"
+name = "movement_rp_wasm"
 edition = "2021"
 
 [dependencies]

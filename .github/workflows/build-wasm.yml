@@ -23,32 +23,28 @@ jobs:
         run: |
           npm install --global rollup@4.28.1
 
-      - name: Build
-        working-directory: aptos-wasm
+      - name: Build WASM packages
         run: |
           echo "Directory structure before build:"
           ls -R
-          for dir in ./*/; do
+          for dir in ./pollard-kangaroo ./range-proofs; do
             if [ -d "$dir" ]; then
               echo "Building in directory: $dir"
               (cd "$dir" && wasm-pack build --release --target web -d pkg) || {
                 echo "Build failed in directory: $dir"
                 exit 1
               }
-            else
-              echo "No subdirectories found in aptos-wasm"
             fi
           done
 
       - name: Generate npm pkg
         run: |
-          ls -R ./aptos-wasm
           chmod +x ./gen-npm-pkg.sh
           ./gen-npm-pkg.sh
 
       - name: Publish to npm
         run: |
-          cd aptos-confidential-asset-wasm-bindings
+          cd movement-confidential-asset-wasm-bindings
           ls -R .
           cat package.json
           npm pkg fix

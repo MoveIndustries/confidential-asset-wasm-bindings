@@ -2,10 +2,10 @@
 
 # Define paths
 BASE_DIR="./"
-OUTPUT_DIR="./aptos-confidential-asset-wasm-bindings"
+OUTPUT_DIR="./movement-confidential-asset-wasm-bindings"
 OUTPUT_FILE="$OUTPUT_DIR/index.d.ts"
 PACKAGE_JSON="$OUTPUT_DIR/package.json"
-PKG_NAME="@aptos-labs/confidential-asset-wasm-bindings"
+PKG_NAME="@moveindustries/confidential-asset-wasm-bindings"
 PKG_VERSION="0.1.0"
 
 # Check and Install Rollup
@@ -39,12 +39,12 @@ cat <<EOF > "$PACKAGE_JSON"
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aptos-labs/confidential-asset-wasm-bindings.git"
+    "url": "https://github.com/movementlabsxyz/confidential-asset-wasm-bindings.git"
   },
   "exports": {
 EOF
 
-# Process each WASM package in the aptos-wasm folder
+# Process each WASM package in the folder
 for PACKAGE_DIR in "$BASE_DIR"/*; do
   if [ -d "$PACKAGE_DIR" ] && [ -f "$PACKAGE_DIR/Cargo.toml" ]; then
     PACKAGE_NAME=$(basename "$PACKAGE_DIR")
