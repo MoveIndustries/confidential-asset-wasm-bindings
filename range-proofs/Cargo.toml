@@ -13,4 +13,4 @@ js-sys = "0.3.77"
 zerocopy = "0.7.35"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
