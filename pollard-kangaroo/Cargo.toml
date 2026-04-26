@@ -10,4 +10,4 @@ getrandom = { version = "0.2", features = ["js"] }
 pollard-kangaroo = { git = "https://github.com/distributed-lab/pollard-kangaroo.git", branch = "main", features = ["table48", "table32", "presets"] }
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
