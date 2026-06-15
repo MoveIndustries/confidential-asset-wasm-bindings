@@ -10,7 +10,7 @@ use zerocopy::AsBytes;
 
 const MAX_RANGE_BITS: usize = 64;
 
-static BULLETPROOF_DST: &[u8] = b"AptosConfidentialAsset/BulletproofRangeProof";
+static BULLETPROOF_DST: &[u8] = b"MovementConfidentialAsset/BulletproofRangeProof";
 static BULLETPROOF_GENERATORS: Lazy<BulletproofGens> = Lazy::new(|| BulletproofGens::new(MAX_RANGE_BITS, 16));
 
 #[wasm_bindgen]
