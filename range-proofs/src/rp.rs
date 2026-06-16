@@ -105,6 +105,65 @@ pub fn _batch_range_proof(
     })
 }
 
+/// Native (non-wasm) batch range-proof verification. Mirrors the JS-facing
+/// [`crate::batch_verify_proof`] but uses plain Rust types so native consumers (e.g. the
+/// Rust SDK linking this crate as an `rlib`) can call it directly. The Bulletproofs transcript
+/// DST ([`BULLETPROOF_DST`]) is applied here, so verifiers never re-declare it — it lives in
+/// exactly one place alongside the prover.
+pub fn _batch_verify_proof(
+    proof: Vec<u8>,
+    comms: Vec<Vec<u8>>, // 32-byte compressed Ristretto commitment per value
+    val_base: Vec<u8>,
+    rand_base: Vec<u8>,
+    num_bits: usize,
+) -> Result<bool, BatchRangeProofError> {
+    let val_base: [u8; 32] = val_base
+        .try_into()
+        .map_err(|_| BatchRangeProofError::new("`val_base` must be exactly 32 bytes long"))?;
+
+    let rand_base: [u8; 32] = rand_base
+        .try_into()
+        .map_err(|_| BatchRangeProofError::new("`rand_base` must be exactly 32 bytes long"))?;
+
+    if comms.is_empty() {
+        return Err(BatchRangeProofError::new("`comms` cannot be empty"));
+    }
+
+    let comms: Vec<CompressedRistretto> = comms
+        .into_iter()
+        .map(|c| {
+            let arr: [u8; 32] = c.try_into().map_err(|_| {
+                BatchRangeProofError::new("Each commitment must be exactly 32 bytes")
+            })?;
+            Ok(CompressedRistretto(arr))
+        })
+        .collect::<Result<Vec<CompressedRistretto>, BatchRangeProofError>>()?;
+
+    let pg = PedersenGens {
+        B: CompressedRistretto(val_base)
+            .decompress()
+            .ok_or_else(|| BatchRangeProofError::new("Failed to decompress `val_base`"))?,
+        B_blinding: CompressedRistretto(rand_base)
+            .decompress()
+            .ok_or_else(|| BatchRangeProofError::new("Failed to decompress `rand_base`"))?,
+    };
+
+    let proof = bulletproofs::RangeProof::from_bytes(proof.as_slice())
+        .map_err(|e| BatchRangeProofError::new(&format!("Failed to deserialize range proof: {}", e)))?;
+
+    let ok = proof
+        .verify_multiple(
+            &BULLETPROOF_GENERATORS,
+            &pg,
+            &mut Transcript::new(BULLETPROOF_DST),
+            &comms,
+            num_bits,
+        )
+        .is_ok();
+
+    Ok(ok)
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -190,5 +249,49 @@ mod tests {
             }
         }
 
+    }
+
+    // A proof produced by `_batch_range_proof` must verify under `_batch_verify_proof` (same
+    // generators, same DST). Guards the native verify path the Rust SDK relies on.
+    #[test]
+    fn test_batch_verify_roundtrip() {
+        // Valid compressed Ristretto generators (reused from `test_batch_range_proof`).
+        let val_base = vec![
+            226, 242, 174, 10, 106, 188, 78, 113, 168, 132, 169, 97, 197, 0, 81, 95, 88, 227, 11,
+            106, 165, 130, 221, 141, 182, 166, 89, 69, 224, 141, 45, 118,
+        ];
+        let rand_base = vec![
+            140, 146, 64, 180, 86, 169, 230, 220, 101, 195, 119, 161, 4, 141, 116, 95, 148, 160,
+            140, 219, 127, 68, 203, 205, 123, 70, 243, 64, 72, 135, 17, 52,
+        ];
+        let v = vec![100u64, 0u64, 65535u64, 7u64]; // power-of-two batch size required by bulletproofs
+        let rs: Vec<Vec<u8>> = (0..v.len())
+            .map(|i| {
+                let mut r = [0u8; 32];
+                r[0] = (i as u8) + 1; // distinct, nonzero randomizers (interpreted mod order)
+                r.to_vec()
+            })
+            .collect();
+        let num_bits = 16;
+
+        let proof = crate::rp::_batch_range_proof(
+            v.clone(),
+            rs,
+            val_base.clone(),
+            rand_base.clone(),
+            num_bits,
+        )
+        .expect("prove should succeed");
+
+        let ok = crate::rp::_batch_verify_proof(
+            proof.proof(),
+            proof.comms(),
+            val_base,
+            rand_base,
+            num_bits,
+        )
+        .expect("verify should not error");
+
+        assert!(ok, "a freshly generated batch range proof must verify");
     }
 }

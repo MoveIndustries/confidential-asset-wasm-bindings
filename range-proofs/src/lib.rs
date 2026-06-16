@@ -10,7 +10,7 @@ use zerocopy::AsBytes;
 
 const MAX_RANGE_BITS: usize = 64;
 
-static BULLETPROOF_DST: &[u8] = b"AptosConfidentialAsset/BulletproofRangeProof";
+static BULLETPROOF_DST: &[u8] = b"MovementConfidentialAsset/BulletproofRangeProof";
 static BULLETPROOF_GENERATORS: Lazy<BulletproofGens> = Lazy::new(|| BulletproofGens::new(MAX_RANGE_BITS, 16));
 
 #[wasm_bindgen]
@@ -121,39 +121,12 @@ pub fn batch_verify_proof(
     rand_base: Vec<u8>,
     num_bits: usize,
 ) -> Result<bool, JsError> {
-    let val_base: [u8; 32] = val_base
-        .try_into()
-        .map_err(|e| JsError::new(&format!("`val_base` must be exactly 32 bytes: {:?}", e)))?;
-    let rand_base: [u8; 32] = rand_base
-        .try_into()
-        .map_err(|e| JsError::new(&format!("`rand_base` must be exactly 32 bytes: {:?}", e)))?;
-    let comm: Vec<CompressedRistretto> = comm
-        .iter()
-        .map(|arr| {
-            CompressedRistretto::from_slice(&arr.to_vec())
-        })
-        .collect();
+    // Thin JS shim: convert JS types to native and delegate to the core in `rp` so the
+    // verification logic (and the Bulletproofs DST) lives in exactly one place.
+    let comms: Vec<Vec<u8>> = comm.iter().map(|arr| arr.to_vec()).collect();
 
-    if comm.is_empty() {
-        return Err(JsError::new("`comm` cannot be empty"));
-    }
-
-    let pg = PedersenGens {
-        B: CompressedRistretto(val_base).decompress().ok_or_else(|| JsError::new("failed to decompress `val_base`"))?,
-        B_blinding: CompressedRistretto(rand_base).decompress().ok_or_else(|| JsError::new("failed to decompress `rand_base`"))?,
-    };
-
-    let proof = bulletproofs::RangeProof::from_bytes(proof.as_slice())
-        .map_err(|e| JsError::new(&format!("error deserializing range proof: {:?}", e)))?;
-    let ok = proof.verify_multiple(
-        &BULLETPROOF_GENERATORS,
-        &pg,
-        &mut Transcript::new(BULLETPROOF_DST),
-        &comm,
-        num_bits,
-    ).is_ok();
-
-    Ok(ok)
+    rp::_batch_verify_proof(proof, comms, val_base, rand_base, num_bits)
+        .map_err(|e| JsError::new(&format!("{}", e)))
 }
 
 #[wasm_bindgen]
